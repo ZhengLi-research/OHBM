@@ -2,7 +2,7 @@
 cd /Users/lizheng/Desktop/RBC/PNC/PNC_FreeSurfer/freesurfer
 
 DATA_PATH="/Users/lizheng/Desktop/RBC/PNC/PNC_FreeSurfer/freesurfer"  # 替换为你的实际路径
-OUTPUT_PATH="/Users/lizheng/Desktop"          # 替换为输出文件的路径
+OUTPUT_PATH="/Users/lizheng/Desktop/RBC_download_report/HBN_CPAC"          # 替换为输出文件的路径
 MISSING_FILE_REPORT="${OUTPUT_PATH}/missing_files_report.xlsx"
 
 # 创建输出目录
