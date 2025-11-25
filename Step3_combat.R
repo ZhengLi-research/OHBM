@@ -7,10 +7,10 @@ library(dplyr)
 library(mgcv)
 
 # Define paths and parameters for structural data harmonization
-project_path <- '/Users/lizheng/Desktop/code/RBCcode/rbc_data_analysis/Newdata/' # nolint
+project_path <- '/Users/lizheng/Desktop/RBC_Output/HBN/Freesurfer/' # nolint
 data_path <- paste(project_path, sep = "")
 
-metric <- 'sv'  # can also be 'gv', 'ct', or 'sa' # nolint: quotes_linter.
+metric <- 'gv'  # can also be 'gv', 'ct', or 'sa' # nolint: quotes_linter.
 # we only want to harmonize 'artifact' version
 qc_version <- 'pass'  # can be 'noqc', 'artifact' # nolint: quotes_linter.
 pfactor_include <- 'no' # whether to include p-factor in covariates # nolint: quotes_linter.
@@ -23,7 +23,7 @@ if (pfactor_include == 'no'){
   dtype <- sprintf('%s_%s', metric, qc_version)
 }
 
-combined_data <- read.csv(paste(data_path, sprintf('combined_pnc_hbn_df_%s.tsv', dtype),
+combined_data <- read.csv(paste(data_path, sprintf('hbn_df_%s.tsv', dtype),  # combined_pnc_hbn_df_%s.tsv
                                 sep = ""),
                           sep = '\t')
 
@@ -36,18 +36,20 @@ pfactor_vec <- combined_data$p_factor_mcelroy_harmonized_all_samples
 }
 
 if (metric == 'ct') {
-  structural_data <- combined_data[, c(1:68, 71, 72)] #[, c(1:68, 71, 72)]
+  structural_data <- combined_data[, c(2:362)] #[, c(1:68, 71, 72)]
 } else if (metric == 'sa') {
-  structural_data <- combined_data[, c(1:68, 69, 70)]
-} else if (metric == 'sv') {
-  structural_data <- combined_data[, c(1:15)]
+  structural_data <- combined_data[, c(2:362)]
 } else {
-  structural_data <- combined_data[, 1:68]
+  structural_data <- combined_data[, c(2:362)]
 }
-#structural_data = combined_data[0:73] # assumes features are in first 400 columns # nolint: line_length_linter.
+# else if (metric == 'sv') {
+#  structural_data <- combined_data[, c(1:15)]
+# }
+# structural_data = combined_data[0:73] # assumes features are in first 400 columns # nolint: line_length_linter.
 
 # Prepare covariate dataframe 纳入年龄和性别等因素的意义。在矫正站点效应时，避免删除上述因素与脑影像特征的关联。使得更精准的矫正站点效应相关的误差
 # Harmonize using covfam with GAM (including nonlinear age effects)
+
 if (pfactor_include == 'yes'){
   covar_df <- bind_cols(combined_data$participant_id,
                         as.numeric(age_vec),
@@ -87,8 +89,15 @@ if (pfactor_include == 'no'){
                             y ~ s(age, k=3, fx=F) +
                               as.factor(sex) + euler)
 }
+
+# -------------------------- 关键修改：合并 participant_id --------------------------
+# 1. 提取covar_df中的participant_id（与矫正数据的行顺序完全一致，确保匹配）
+participant_ids <- covar_df %>% select(participant_id)
+# 2. 将participant_id与矫正后的数据合并（ID列放在第一列，方便查看）
+data.harmonized_covbat <- bind_cols(participant_ids, data.frame(data.harmonized$dat.covbat))
+# ----------------------------------------------------------------------------------
+
 # Save the harmonized functional data
-data.harmonized_covbat <- data.frame(data.harmonized$dat.covbat)
-outputPath <- paste(data_path, sprintf('combined_pnc_hbn_df_%s_harmonized.tsv', dtype),
+outputPath <- paste(data_path, sprintf('hbn_df_%s_harmonized.tsv', dtype), #combined_pnc_'
                     sep = "")
-write.csv(data.harmonized_covbat, outputPath, row.names=FALSE)
+write.csv(data.harmonized_covbat, outputPath, row.names = FALSE, sep = '\t')
