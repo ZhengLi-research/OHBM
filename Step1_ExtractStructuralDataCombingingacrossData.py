@@ -14,7 +14,7 @@ qc_version =  'pass' # 'artifact' or 'qc'
 # Generate tsv files for RBC structural data
 
 dtype = ['ct', 'sa', 'mc', 'gc', 'fi', 'ci', 'gv', 'sv'] # ct: cortex thickness; sa: surface area; mc: mean curvature; gc: gaussian curvature; fi: folding index; ci: curvature index; gv: gray matter volume
-dataset = ['hbn', 'pnc'] #'bhrc', 'ccnp', 'nki', 'pnc'
+dataset = ['hbn'] #'bhrc', 'ccnp', 'nki', 'pnc'
 
 for iDataset in dataset: # 按照数据库类型进行循环
     #if qc_version == 'noqc':
@@ -57,21 +57,21 @@ for iDataset in dataset: # 按照数据库类型进行循环
         temp_file = iFile
         temp_file2 = iFile
         brain_data = pd.read_csv(iFile, delimiter='\t')
-        DK68 = brain_data.loc[brain_data['atlas'] == 'aparc', ('hemisphere', 'StructName', 'SurfArea', 'GrayVol', 'ThickAvg', 'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd')]
+        DK68 = brain_data.loc[brain_data['atlas'] == 'glasser', ('hemisphere', 'StructName', 'SurfArea', 'GrayVol', 'ThickAvg', 'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd')]
         DK68.reset_index(inplace=True, drop=True)
         temp_filefin = temp_file2.replace('regionsurfacestats', 'brainmeasures')
         brain_global_file = pd.read_csv(temp_filefin, delimiter='\t')
-        brain_global_index = brain_global_file[['Cortex_PialSurfArea_lh', 'Cortex_PialSurfArea_rh', 'Cortex_MeanThickness_lh', 'Cortex_MeanThickness_rh', 'EstimatedTotalIntraCranialVol_eTIV']]
+        brain_global_index = brain_global_file[['EstimatedTotalIntraCranialVol_eTIV']] #'Cortex_PialSurfArea_lh', 'Cortex_PialSurfArea_rh', 'Cortex_MeanThickness_lh', 'Cortex_MeanThickness_rh'
         subcortical_file = brain_global_file.copy()
-        sv_index = subcortical_file[['Left_Thalamus_Proper_Volume_mm3', 'Right_Thalamus_Proper_Volume_mm3', 'Left_Caudate_Volume_mm3', 'Right_Caudate_Volume_mm3', 'Left_Putamen_Volume_mm3', 'Right_Putamen_Volume_mm3'
-                            , 'Left_Pallidum_Volume_mm3', 'Right_Pallidum_Volume_mm3', 'Left_Hippocampus_Volume_mm3', 'Right_Hippocampus_Volume_mm3', 'Left_Amygdala_Volume_mm3', 'Right_Amygdala_Volume_mm3'
-                            , 'Left_Accumbens_area_Volume_mm3', 'Right_Accumbens_area_Volume_mm3']]
+        #sv_index = subcortical_file[['Left_Thalamus_Proper_Volume_mm3', 'Right_Thalamus_Proper_Volume_mm3', 'Left_Caudate_Volume_mm3', 'Right_Caudate_Volume_mm3', 'Left_Putamen_Volume_mm3', 'Right_Putamen_Volume_mm3'
+        #                    , 'Left_Pallidum_Volume_mm3', 'Right_Pallidum_Volume_mm3', 'Left_Hippocampus_Volume_mm3', 'Right_Hippocampus_Volume_mm3', 'Left_Amygdala_Volume_mm3', 'Right_Amygdala_Volume_mm3'
+        #                    , 'Left_Accumbens_area_Volume_mm3', 'Right_Accumbens_area_Volume_mm3']]
         # 合并字符串
-        DK68['StructName'] = DK68['hemisphere'] + '_' + DK68['StructName']
+        DK68['StructName'] = DK68['hemisphere'] + '_' + DK68['StructName'] 
         region_names = list(DK68['StructName'])
-        sv_names = list(sv_index.columns)
-        region_names.extend(['Cortex_PialSurfArea_lh', 'Cortex_PialSurfArea_rh', 'Cortex_MeanThickness_lh', 'Cortex_MeanThickness_rh', 'EstimatedTotalIntraCranialVol_eTIV']) 
-        sv_names.extend(['EstimatedTotalIntraCranialVol_eTIV'])
+        # sv_names = list(sv_index.columns)
+        region_names.extend(['EstimatedTotalIntraCranialVol_eTIV']) # 'Cortex_PialSurfArea_lh', 'Cortex_PialSurfArea_rh', 'Cortex_MeanThickness_lh', 'Cortex_MeanThickness_rh', 
+        # sv_names.extend(['EstimatedTotalIntraCranialVol_eTIV'])
     
         ct.append(np.concatenate([np.array(DK68['ThickAvg']), np.array(brain_global_index).flatten()]))# ct.append(np.array(DK68['ThickAvg']))
         sa.append(np.concatenate([np.array(DK68['SurfArea']), np.array(brain_global_index).flatten()]))# sa.append(np.array(DK68['SurfArea']))
@@ -80,7 +80,7 @@ for iDataset in dataset: # 按照数据库类型进行循环
         fi.append(np.concatenate([np.array(DK68['FoldInd']), np.array(brain_global_index).flatten()]))# fi.append(np.array(DK68['FoldInd']))
         ci.append(np.concatenate([np.array(DK68['CurvInd']), np.array(brain_global_index).flatten()]))# ci.append(np.array(DK68['CurvInd']))
         gv.append(np.concatenate([np.array(DK68['GrayVol']), np.array(brain_global_index).flatten()]))# gv.append(np.array(DK68['GrayVol']))
-        sv.append(np.concatenate([np.array(sv_index).flatten(), np.array(brain_global_index['EstimatedTotalIntraCranialVol_eTIV'])]))# sv.append(np.array(sv_index).flatten())
+        # sv.append(np.concatenate([np.array(sv_index).flatten(), np.array(brain_global_index['EstimatedTotalIntraCranialVol_eTIV'])]))# sv.append(np.array(sv_index).flatten())
         print('\nFile %i/%i done!' % (i, len(fileNames)))
 
     for iType in dtype:
@@ -128,10 +128,10 @@ for iDataset in dataset: # 按照数据库类型进行循环
             df_metric = pd.DataFrame(np.array(ci), columns=region_names)
             df_metric['participant_id'] = subj_list
             df_metric['meanVal'] = np.mean(np.array(ci), axis=1)
-        elif iType == 'sv':
-            df_metric = pd.DataFrame(np.array(sv), columns=sv_names)
-            df_metric['participant_id'] = subj_list
-            df_metric['meanVal'] = np.mean(np.array(ci), axis=1)
+        #elif iType == 'sv':
+        #    df_metric = pd.DataFrame(np.array(sv), columns=sv_names)
+        #    df_metric['participant_id'] = subj_list
+        #    df_metric['meanVal'] = np.mean(np.array(ci), axis=1)
         # if data is 'bhrc' or 'nki', only keep baseline scans
         if iDataset == 'bhrc':
             demogs_ses1 = demogs.query('session_id == 1')
@@ -200,6 +200,9 @@ for iDataset in dataset: # 按照数据库类型进行循环
         df_final = df_qc.copy()
         df_final = df_final.query('6 <= age <= 22')
         df_final.reset_index(inplace=True, drop=True)
+        df_final.drop(columns=['lh_???', 'rh_???'], inplace=True)
+        
+
 
         # if qc_version == 'noqc':
         #     output_filename = (datapath + 'data/dataR/%s_df_%s_noqc.tsv'
@@ -208,10 +211,10 @@ for iDataset in dataset: # 按照数据库类型进行循环
         #     output_filename = (datapath + 'data/dataR/%s_df_%s_artifact.tsv'
         #                        % (iDataset, iType))
         if qc_version == 'pass':
-            output_filename = ( '/Users/lizheng/Desktop/code/RBCcode/rbc_data_analysis/Newdata/%s_df_%s_pass.tsv'
+            output_filename = ( '/Users/lizheng/Desktop/RBC_Output/HBN/Freesurfer/%s_df_%s_pass.tsv'
                                % (iDataset, iType))           
 
-        df_final.to_csv(output_filename, index=False, sep='\t')
+        df_final.to_csv(output_filename, sep='\t')
 
 # combine all 5 datasets
 
