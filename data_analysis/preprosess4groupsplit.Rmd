@@ -62,15 +62,6 @@ names(CBCL)[2: ncol(CBCL)] <- CBCL_new_col_names
 
 #names(CBCL_pre)[2: ncol(CBCL_pre)] <- CBCL_pre_new_col_names 
 
-## modifiy column name of diagnosis
-
-diagnosis$Identifiers <- str_remove(diagnosis$Identifiers , ",assessment")
-names(diagnosis) <- str_remove(names(diagnosis), "Diagnosis_ClinicianConsensus,")
-
-diagnosis_select_column <- c("Identifiers", "DX_01_Cat")
-selected_diagnosis <- diagnosis %>%
-  select(all_of(diagnosis_select_column))
-
 ## modifiy MSN
 
 names(MSN_vovars)[names(MSN_vovars) == "participant_id"] <- 'Identifiers'
@@ -80,6 +71,19 @@ selected_MSN <- MSN_vovars %>%
 
 
 ```
+
+```{r}
+## modifiy column name of diagnosis
+
+diagnosis$Identifiers <- str_remove(diagnosis$Identifiers , ",assessment")
+names(diagnosis) <- str_remove(names(diagnosis), "Diagnosis_ClinicianConsensus,")
+
+diagnosis_select_column <- c("Identifiers", "DX_01", "DX_01_Cat")
+selected_diagnosis<- diagnosis %>%
+  select(all_of(diagnosis_select_column))
+
+```
+
 
 ## 以selected_MSN为基准，合并selected_diagnosis、CBCL
 ```{r}
@@ -103,6 +107,7 @@ head(merged_data, 3)
 
 ## 计算合并后数据CBCL量表的0值情况 没有100%为0的题项。因此不删除题项。
 ```{r}
+
 CBCL_col_names <- names(CBCL)[2:ncol(CBCL)]
 
 # 计算目标列中0的数量占总数量的比例
@@ -134,6 +139,7 @@ print(zero_ratios_df)
 ```
 ## 识别每个被试CBCL的缺失值比例，保留缺失值比例低于10%被试
 ```{r}
+
 CBCL_col_names <- names(CBCL)[2:ncol(CBCL)]
 CBCL_new <- merged_data %>%
   select(all_of(c("Identifiers" , CBCL_col_names)))
@@ -160,6 +166,7 @@ cat("过滤后样本量：", nrow(CBCL_filtered), "\n")
 ```
 ## 识别MSN缺失值的情况
 ```{r}
+
 target_cols <- c("Identifiers", names(MSN_vovars)[2:361], "study_site", "age", "sex", "euler")
 MSN_new <- merged_data %>%
   select(all_of(target_cols))
@@ -186,6 +193,7 @@ cat("过滤后样本量：", nrow(MSN_new_filtered), "\n")
 ```
 ## 识别诊断结果的缺失值情况
 ```{r}
+
 target_cols <-  names(selected_diagnosis)
 diagnosis_new <- merged_data %>%
   select(all_of(target_cols))
@@ -204,7 +212,7 @@ print(sorted_result)
 
 # 过滤掉缺失值占比>10%的行，保留剩余行
 diagnosis_new_filtered <- diagnosis_new %>%
-  filter(missing_ratio <= 0.1)  # 只保留缺失值≤10%的被试
+  filter(missing_ratio == 0)  # 只保留缺失值≤10%的被试
 
 cat("过滤前样本量：", nrow(diagnosis_new), "\n")
 cat("过滤后样本量：", nrow(diagnosis_new_filtered), "\n")
@@ -275,7 +283,9 @@ fin_data <- fin_data  %>%
     sex,          # 第三列       
     euler,        # 第五列
     study_site, 
-    names(MSN_vovars)[2:360],
+    DX_01,
+    DX_01_Cat,
+    names(MSN_vovars)[2:361],
     CBCL_col_names # 补全剩下的所有列（按原有顺序）
   )
 
