@@ -1,0 +1,291 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-12-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## Load libraries
+library("caret")
+library("ggplot2")
+library('readr')
+library("tidyverse")
+library("grid")
+library("cowplot")
+library("data.table")
+library(dplyr)
+library(stringr)
+```
+
+```{r}
+
+## Set paths
+filepath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/behavior/"
+outpath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
+
+```
+
+```{r}
+
+## Load data
+CBCL <- fread(paste0(filepath, "CBCL.csv"))
+# CBCL_pre <- fread(paste0(filepath, "CBCL_pre.csv"))
+diagnosis <- fread(paste0(filepath, "diagnosis.csv"))
+MSN_vovars <- fread(paste0(filepath, "hbn_df_ci_pass.csv"))
+
+```
+
+## 修改CBCL的行、列名
+## 修改诊断表格的行、列名，并提取指定列、提取诊断表格中的有用信息
+## 修改MSN的列明，并提取指定列
+```{r}
+
+# 1. 处理Identifiers列：删除“,assessment”后缀
+CBCL$Identifiers <- str_remove(CBCL$Identifiers, ",assessment")
+
+CBCL_col_names <- names(CBCL)[2:ncol(CBCL)]
+
+CBCL_new_col_names <- str_sub(CBCL_col_names, start = 6)
+
+names(CBCL)[2: ncol(CBCL)] <- CBCL_new_col_names 
+
+## modifiy column name of CBCL_pre
+#CBCL_pre$Identifiers <- str_remove(CBCL_pre$Identifiers, ",assessment")
+
+#CBCL_pre_col_names <- names(CBCL_pre)[2:ncol(CBCL_pre)]
+
+#CBCL_pre_new_col_names <- str_sub(CBCL_pre_col_names, start = 10)
+
+#names(CBCL_pre)[2: ncol(CBCL_pre)] <- CBCL_pre_new_col_names 
+
+## modifiy column name of diagnosis
+
+diagnosis$Identifiers <- str_remove(diagnosis$Identifiers , ",assessment")
+names(diagnosis) <- str_remove(names(diagnosis), "Diagnosis_ClinicianConsensus,")
+
+diagnosis_select_column <- c("Identifiers", "DX_01_Cat")
+selected_diagnosis <- diagnosis %>%
+  select(all_of(diagnosis_select_column))
+
+## modifiy MSN
+
+names(MSN_vovars)[names(MSN_vovars) == "participant_id"] <- 'Identifiers'
+MSN_names <- c(names(MSN_vovars)[2:361], "Identifiers", "study_site", "age", "sex", "euler")
+selected_MSN <- MSN_vovars %>%
+  select(all_of(MSN_names))
+
+
+```
+
+## 以selected_MSN为基准，合并selected_diagnosis、CBCL
+```{r}
+ # merge CBCL diagnosis MSN data
+# 以selected_MSN为基准（左表），依次合并另外两个数据集
+merged_data <- selected_MSN %>%
+  # 左连接selected_diagnosis：保留selected_MSN的所有样本，匹配diagnosis数据
+  left_join(selected_diagnosis, by = "Identifiers") %>%
+  # 继续左连接CBCL：保留前面结果中的所有样本（即selected_MSN的样本），匹配CBCL数据
+  left_join(CBCL, by = "Identifiers")
+
+# 查看合并结果
+cat("合并后的数据维度：", nrow(merged_data), "行，", ncol(merged_data), "列\n")
+# 确认行数与基准数据集一致（应等于selected_MSN的行数）
+cat("基准数据集(selected_MSN)行数：", nrow(selected_MSN), "\n")
+
+# 查看前3行，验证合并效果
+head(merged_data, 3)
+
+```
+
+## 计算合并后数据CBCL量表的0值情况 没有100%为0的题项。因此不删除题项。
+```{r}
+CBCL_col_names <- names(CBCL)[2:ncol(CBCL)]
+
+# 计算目标列中0的数量占总数量的比例
+zero_ratios <- sapply(CBCL_col_names, function(col_name) {
+  # 提取当前列数据
+  col_data <- merged_data[[col_name]]
+  # 统计0的数量（忽略NA）
+  zero_count <- sum(col_data == 0, na.rm = TRUE)
+  # 计算总数据量（非NA的数量）
+  total_count <- sum(!is.na(col_data))
+  # 计算比例（若总数据量为0，返回NA避免除以0错误）
+  if (total_count == 0) {
+    return(NA)
+  } else {
+    return(zero_count / total_count)
+  }
+})
+
+# 转换为数据框并保留4位小数
+zero_ratios_df <- data.frame(
+  column_name  = CBCL_col_names,
+  zero_ratio = round(zero_ratios, 4),  # 保留4位小数
+  row.names = NULL
+)
+
+# 打印结果
+print(zero_ratios_df)
+
+```
+## 识别每个被试CBCL的缺失值比例，保留缺失值比例低于10%被试
+```{r}
+CBCL_col_names <- names(CBCL)[2:ncol(CBCL)]
+CBCL_new <- merged_data %>%
+  select(all_of(c("Identifiers" , CBCL_col_names)))
+
+CBCL_new$missing_ratio <- rowSums(is.na(CBCL_new[, 2:ncol(CBCL_new)])) / ncol(CBCL_new[, 2:ncol(CBCL_new)])
+         
+
+# 按缺失值比例从高到低排序（desc()表示降序）
+sorted_result <- CBCL_new %>%
+  # 保留被试标识符和缺失值占比列（按需选择，也可保留全部列）
+  select(Identifiers, missing_ratio) %>%
+  arrange(desc(missing_ratio))  # desc()：降序排列
+
+# 查看排序结果
+print(sorted_result)
+
+# 过滤掉缺失值占比>10%的行，保留剩余行
+CBCL_filtered <- CBCL_new %>%
+  filter(missing_ratio <= 0.1)  # 只保留缺失值≤10%的被试
+
+cat("过滤前样本量：", nrow(CBCL_new), "\n")
+cat("过滤后样本量：", nrow(CBCL_filtered), "\n")
+
+```
+## 识别MSN缺失值的情况
+```{r}
+target_cols <- c("Identifiers", names(MSN_vovars)[2:361], "study_site", "age", "sex", "euler")
+MSN_new <- merged_data %>%
+  select(all_of(target_cols))
+
+MSN_new$missing_ratio <- rowSums(is.na(MSN_new[, 2:ncol(MSN_new)])) / ncol(MSN_new[, 2:ncol(MSN_new)])
+         
+
+# 按缺失值比例从高到低排序（desc()表示降序）
+sorted_result <- MSN_new %>%
+  # 保留被试标识符和缺失值占比列（按需选择，也可保留全部列）
+  select(Identifiers, missing_ratio) %>%
+  arrange(desc(missing_ratio))  # desc()：降序排列
+
+# 查看排序结果
+print(sorted_result)
+
+# 过滤掉缺失值占比>10%的行，保留剩余行
+MSN_new_filtered <- MSN_new %>%
+  filter(missing_ratio <= 0.1)  # 只保留缺失值≤10%的被试
+
+cat("过滤前样本量：", nrow(MSN_new), "\n")
+cat("过滤后样本量：", nrow(MSN_new_filtered), "\n")
+
+```
+## 识别诊断结果的缺失值情况
+```{r}
+target_cols <-  names(selected_diagnosis)
+diagnosis_new <- merged_data %>%
+  select(all_of(target_cols))
+
+diagnosis_new$missing_ratio <- rowSums(is.na(diagnosis_new[, 2:ncol(diagnosis_new)])) / ncol(diagnosis_new[, 2:ncol(diagnosis_new)])
+         
+
+# 按缺失值比例从高到低排序（desc()表示降序）
+sorted_result <- diagnosis_new %>%
+  # 保留被试标识符和缺失值占比列（按需选择，也可保留全部列）
+  select(Identifiers, missing_ratio) %>%
+  arrange(desc(missing_ratio))  # desc()：降序排列
+
+# 查看排序结果
+print(sorted_result)
+
+# 过滤掉缺失值占比>10%的行，保留剩余行
+diagnosis_new_filtered <- diagnosis_new %>%
+  filter(missing_ratio <= 0.1)  # 只保留缺失值≤10%的被试
+
+cat("过滤前样本量：", nrow(diagnosis_new), "\n")
+cat("过滤后样本量：", nrow(diagnosis_new_filtered), "\n")
+
+```
+
+
+## 对CBCL的缺失值补差，采用基于K - 近邻（K-Nearest Neighbors, KNN） 算法的缺失值插补方法，属于基于实例的插补（区别于均值 / 中位数这种统计量插补）。：对于有缺失值的样本，先找到数据集中与它最相似的 K 个 “近邻样本”，再用这 K 个近邻的对应特征值（无缺失）来填充当前样本的缺失值。
+```{r}
+
+# 安装并加载必要包
+library(VIM)
+library(dplyr)
+
+# ===== 数据准备 =====
+# 假设你的数据是CBCL_new，第一列是Identifiers（字符型），2列及以后是数值型题项
+# 步骤1：分离标识符列（KNN插补仅处理数值列）
+cbcl_numeric <- CBCL_filtered  %>% select(-c(Identifiers, missing_ratio))   # 提取数值题项列
+cbcl_id <- CBCL_filtered  %>% select(Identifiers)        # 保留标识符列
+
+# 步骤2：KNN插补（修正参数，移除不支持的metric）
+# k=5（对应MATLAB默认K=5），imp_var=FALSE不生成插补标记列
+cbcl_imputed_knn <- kNN(
+  data = cbcl_numeric,    # 仅数值列（必须是数值型，不能有字符/因子）
+  k = 5,                  # 近邻数量（核心参数，可调整为3/10等）
+  imp_var = FALSE         # 不生成“是否插补”的标记列（简化结果）
+)
+
+# 步骤3：合并回标识符列，生成最终数据
+CBCL_imputed <- cbind(cbcl_id, cbcl_imputed_knn)
+
+# ===== 验证插补结果 =====
+cat("插补前空值数量：", sum(is.na(CBCL_filtered)), "\n")
+cat("插补后空值数量：", sum(is.na(CBCL_imputed)), "\n")
+# 查看前5行前5列结果
+head(CBCL_imputed[, 1:5])
+
+#write.csv(
+#  x = CBCL_imputed,                # 要保存的数据框
+#  file = "C:/Users/BNU/Desktop/behavior_data/CBCL_imputed_knn.csv",   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+#  row.names = FALSE                # 不保存行号（避免冗余列）
+#)
+
+```
+
+## 合并CBCL_imputed、MSN_new_filtered、selected_diagnosis
+```{r}
+ # merge CBCL diagnosis MSN data
+# 以selected_MSN为基准（左表），依次合并另外两个数据集
+fin_data <- CBCL_imputed %>%
+  # 第一步：左连接MSN_new_filtered（以CBCL_imputed为基准，保留其所有被试）
+  left_join(MSN_new_filtered, by = "Identifiers") %>%
+  # 第二步：内连接selected_diagnosis（取交集，仅保留三者都有的被试）
+  inner_join(diagnosis_new_filtered, by = "Identifiers")
+
+# 查看合并结果
+cat("合并后的数据维度：", nrow(fin_data), "行，", ncol(fin_data), "列\n")
+# 确认行数与基准数据集一致（应等于selected_MSN的行数）
+cat("基准数据集(CBCL_imputed)行数：", nrow(CBCL_imputed), "\n")
+
+# 查看前3行，验证合并效果
+head(fin_data, 3)
+
+fin_data <- fin_data  %>%
+  select(
+    Identifiers,  # 第一列
+    age,          # 第二列
+    sex,          # 第三列       
+    euler,        # 第五列
+    study_site, 
+    names(MSN_vovars)[2:360],
+    CBCL_col_names # 补全剩下的所有列（按原有顺序）
+  )
+
+write.csv(
+  x = fin_data,                # 要保存的数据框
+  file = paste0(outpath, "all_data.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+
+
+
+```
