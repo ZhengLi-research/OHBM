@@ -1,14 +1,14 @@
 %Importing the data:
 clear, clc,close
-cd C:\Users\BNU\Desktop\HBN\Freesurfer
+cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/freesurfer_split
 
-a=load('hbn_df_ci_pass_harmonized.mat').fin;
-b=load('hbn_df_fi_pass_harmonized.mat').fin;
-c=load('hbn_df_gc_pass_harmonized.mat').fin;
-d=load('hbn_df_gv_pass_harmonized.mat').fin;
-e=load('hbn_df_mc_pass_harmonized.mat').fin;
-f=load('hbn_df_sa_pass_harmonized.mat').fin;
-g=load('hbn_df_ct_pass_harmonized.mat').fin;
+a=load('ci_test.mat').fin;
+b=load('fi_test.mat').fin;
+c=load('gc_test.mat').fin;
+d=load('gv_test.mat').fin;
+e=load('mc_test.mat').fin;
+f=load('sa_test.mat').fin;
+g=load('ct_test.mat').fin;
 
 a=table2array(a);
 b=table2array(b);
@@ -58,4 +58,4 @@ end
 % end
 
 MSNnetwork=cat(3,Z_subj_MSN_7{:});
-save('newMSNnetwork.mat',"MSNnetwork",'-mat')
+save('test_newMSNnetwork.mat',"MSNnetwork",'-mat')

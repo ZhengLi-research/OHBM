@@ -1,5 +1,5 @@
-cd 'C:\Users\BNU\Desktop\HBN\Freesurfer'
-we=dir(fullfile('hbn*_harmonized.tsv'));
+cd '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/freesurfer_split'
+we=dir(fullfile('*_test.csv'));
 leng=size(we,1);
 for i=1:leng
     loadname = we(i).name;
