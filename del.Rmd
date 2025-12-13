@@ -3,7 +3,7 @@ title: "Untitled"
 output: html_document
 date: "2025-12-11"
 ---
-
+## 拆分7种不同的形态结构的训练集和测试集
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
