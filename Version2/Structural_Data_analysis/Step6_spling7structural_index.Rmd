@@ -22,22 +22,22 @@ library(stringr)
 ```
 
 ```{r}
-split_file_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/'
-MSN_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/HBN/Freesurfer/'
-output_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/freesurfer_split/'
+split_file_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/'
+MSN_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/'
+output_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/Structural_split/'
 ```
 
 ```{r}
 train_data <- fread(paste0(split_file_path, "train_data.csv"))
 test_data <- fread(paste0(split_file_path, "test_data.csv"))
 
-ci <- fread(paste0(MSN_path, "hbn_df_ci_pass_harmonized.tsv"))
-ct <- fread(paste0(MSN_path, "hbn_df_ct_pass_harmonized.tsv"))
-fi <- fread(paste0(MSN_path, "hbn_df_fi_pass_harmonized.tsv"))
-gc <- fread(paste0(MSN_path, "hbn_df_gc_pass_harmonized.tsv"))
-gv <- fread(paste0(MSN_path, "hbn_df_gv_pass_harmonized.tsv"))
-mc <- fread(paste0(MSN_path, "hbn_df_mc_pass_harmonized.tsv"))
-sa <- fread(paste0(MSN_path, "hbn_df_sa_pass_harmonized.tsv"))
+ci <- fread(paste0(MSN_path, "hbn_df_ci_pass.tsv"))[, c(103, 2:101)]
+ct <- fread(paste0(MSN_path, "hbn_df_ct_pass.tsv"))[, c(103, 2:101)]
+fi <- fread(paste0(MSN_path, "hbn_df_fi_pass.tsv"))[, c(103, 2:101)]
+gc <- fread(paste0(MSN_path, "hbn_df_gc_pass.tsv"))[, c(103, 2:101)]
+gv <- fread(paste0(MSN_path, "hbn_df_gv_pass.tsv"))[, c(103, 2:101)]
+mc <- fread(paste0(MSN_path, "hbn_df_mc_pass.tsv"))[, c(103, 2:101)]
+sa <- fread(paste0(MSN_path, "hbn_df_sa_pass.tsv"))[, c(103, 2:101)]
 ```
 
 ```{r}
@@ -159,5 +159,5 @@ write.csv(
   file = paste0(output_path, "sa_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
   row.names = FALSE                # 不保存行号（避免冗余列）
 )
-
+cat("ok")
 ```
