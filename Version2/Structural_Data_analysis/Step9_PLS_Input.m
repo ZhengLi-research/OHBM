@@ -1,9 +1,9 @@
 %%% Script that creates input files to plsgui
 %%% IV 2023
 
-datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/freesurfer_split/';
-behaviorpath = '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/';
-plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/';
+datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/Structural_split/';
+behaviorpath = '//Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
+plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
 
 %% Prep datafile
 % data is indexed by datafile, mat-file that reads into matlab as "datamat"
@@ -30,7 +30,6 @@ all_data_matched = all_data(match_indices, :);
 % 方法1：分步条件替换（新手易理解）
 % 初始化数值列（和 sex 列长度一致）
 sex_numeric = zeros(height(all_data_matched), 1);  % 先默认设为 0（对应 Female）
-
 % 替换 Male 为 1
 sex_numeric(strcmp(all_data_matched.sex, 'Male')) = 1;
 % 替换 Other 为 3
@@ -39,11 +38,17 @@ sex_numeric(strcmp(all_data_matched.sex, 'Other')) = 3;
 % 将替换后的数值赋值回原 sex 列（或新建列，如 data.sex_num = sex_numeric）
 all_data_matched.sex = sex_numeric;
 
-CBCL = all_data_matched(: ,367:485);
+% 将站点信息转为数字符号
+site_numeric = zeros(height(all_data_matched), 1); % HBNsiteCBIC = 0
+site_numeric(strcmp(all_data_matched.study_site, 'HBNsiteCUNY')) = 1;
+site_numeric(strcmp(all_data_matched.study_site, 'HBNsiteRU')) = 2;
+site_numeric(strcmp(all_data_matched.study_site, 'HBNsiteSI')) = 3;
+all_data_matched.study_site = site_numeric;
+
+CBCL = all_data_matched(: ,109:227);
 symp_mat = table2array(CBCL);
 
-covars = table2array(all_data_matched(:, 2:4));
-
+covars = table2array(all_data_matched(:, [2:5, 108]));
 
 symp_mat_scaled=zscore(symp_mat);
 
@@ -59,7 +64,8 @@ addpath /Users/lizheng/Matlab_Plugin/FSLNets
 covars(:,2)=categorical(covars(:,2)); %sex
 covars(:,1)=zscore(covars(:,1)); %age
 covars(:,3)=zscore(covars(:,3)); %elous
-
+covars(:,4)=categorical(covars(:,4)); %site
+covars(:,5)=zscore(covars(:,5)); % TIV
 
 datamat_unconfound=nets_unconfound(datamat,covars);
 datamat = single(datamat_unconfound);
@@ -101,7 +107,7 @@ session_info = struct('description', 'hbn edges' , ...
 singeprecision = 1;
 voxel_size = [2,2,2]; 
 
-save('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat', ...
+save('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat', ...
     'behavdata','create_datamat_info','dims','session_info','behavname','create_ver','origin',...
     'singeprecision','bad_coords','coords','datafile','selected_subjects','voxel_size')
 
