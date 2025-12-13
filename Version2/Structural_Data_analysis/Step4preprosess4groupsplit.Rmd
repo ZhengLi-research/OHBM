@@ -22,16 +22,12 @@ library(stringr)
 ```
 
 ```{r}
-
 ## Set paths
-filepath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/
-behavior_data/"
-outpath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output"
-
+filepath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/behavior_data/"
+outpath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/"
 ```
 
 ```{r}
-
 ## Load data
 CBCL <- fread(paste0(filepath, "CBCL.csv"))
 # CBCL_pre <- fread(paste0(filepath, "CBCL_pre.csv"))
@@ -66,10 +62,10 @@ names(CBCL)[2: ncol(CBCL)] <- CBCL_new_col_names
 ## modifiy MSN
 
 names(MSN_vovars)[names(MSN_vovars) == "participant_id"] <- 'Identifiers'
-MSN_names <- c(names(MSN_vovars)[2:361], "Identifiers", "study_site", "age", "sex", "euler")
+names(MSN_vovars)[names(MSN_vovars) == "EstimatedTotalIntraCranialVol_eTIV"] <- 'TIV'
+MSN_names <- c(names(MSN_vovars)[2:101], "TIV" ,"Identifiers", "study_site", "age", "sex", "euler")
 selected_MSN <- MSN_vovars %>%
   select(all_of(MSN_names))
-
 
 ```
 
@@ -168,7 +164,7 @@ cat("过滤后样本量：", nrow(CBCL_filtered), "\n")
 ## 识别MSN缺失值的情况
 ```{r}
 
-target_cols <- c("Identifiers", names(MSN_vovars)[2:361], "study_site", "age", "sex", "euler")
+target_cols <- c("Identifiers", names(MSN_vovars)[2:101], "TIV" , "study_site", "age", "sex", "euler")
 MSN_new <- merged_data %>%
   select(all_of(target_cols))
 
@@ -286,7 +282,8 @@ fin_data <- fin_data  %>%
     study_site, 
     DX_01,
     DX_01_Cat,
-    names(MSN_vovars)[2:361],
+    names(MSN_vovars)[2:101],
+    TIV,
     CBCL_col_names # 补全剩下的所有列（按原有顺序）
   )
 
