@@ -20,14 +20,14 @@ library("data.table")
 ```
 
 ```{r}
-filepath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
-outpath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
+filepath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/behavior_data/"
+outpath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/"
 ```
 
 ```{r}
 ## Load data
-covars <- fread(paste0(filepath, "all_data.csv"))
-select_col <- c('Identifiers', 'sex', 'age', "DX_01", "DX_01_Cat")
+covars <- fread(paste0(outpath, "all_data.csv"))
+select_col <- c('Identifiers', 'sex', 'age','study_site', "DX_01", "DX_01_Cat")
 data_split <- covars %>%
   select(all_of(select_col ))
 ```
@@ -86,7 +86,8 @@ head(data_split[, c("DX_01", "DX_01_Cat")], 10)
 data_split <- data_split %>%
   select(-"DX_01")  %>% 
   mutate(sex = as.factor(sex),
-         DX_01_Cat = as.factor(DX_01_Cat))
+         DX_01_Cat = as.factor(DX_01_Cat),
+         study_site = as.factor(study_site))
 
 ```
 
@@ -120,7 +121,8 @@ data_split$age_group <- cut(
 data_split$strata_factor <- interaction(
   data_split$age_group,
   data_split$sex,
-  data_split$DX_01_Cat,  # 即你之前处理的DX_01_Cat
+  data_split$DX_01_Cat,
+  data_split$study_site,# 即你之前处理的DX_01_Cat
   drop = TRUE  # 去除无数据的组合
 )
 
