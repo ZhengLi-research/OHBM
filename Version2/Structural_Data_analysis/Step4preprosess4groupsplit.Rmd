@@ -24,8 +24,9 @@ library(stringr)
 ```{r}
 
 ## Set paths
-filepath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/behavior/"
-outpath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
+filepath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/
+behavior_data/"
+outpath <- "/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output"
 
 ```
 
