@@ -1,0 +1,248 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-12-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## Load libraries
+library("caret")
+library("ggplot2")
+library('readr')
+library("tidyverse")
+library("grid")
+library("cowplot")
+library("data.table")
+```
+
+```{r}
+filepath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
+outpath <- "D:/Filez/李征/Sync/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/"
+```
+
+```{r}
+## Load data
+covars <- fread(paste0(filepath, "all_data.csv"))
+select_col <- c('Identifiers', 'sex', 'age', "DX_01", "DX_01_Cat")
+data_split <- covars %>%
+  select(all_of(select_col ))
+```
+
+## 重新编码诊断类别
+```{r}
+# 加载必要包（如果需要）
+# install.packages("dplyr") # 首次使用需安装
+library(dplyr)
+
+# 1. 第一步：批量重编码 DX_01_Cat 列的基础分类
+data_split <- data_split %>%
+  mutate(DX_01_Cat = case_when(
+    # 第一组：合并为 No Diagnosis Given
+    DX_01_Cat %in% c("No Diagnosis Given", "No Diagnosis Given: Incomplete Eval") ~ "No Diagnosis Given",
+    
+    # 第二组：合并为 Other
+    DX_01_Cat %in% c(
+      "Other Conditions That May Be a Focus of Clinical Attention",
+      "Disruptive, Impulse Control and Conduct Disorders",
+      "Obsessive Compulsive and Related Disorders",
+      "Trauma and Stressor Related Disorders",
+      "Elimination Disorders",
+      "Substance Related and Addictive Disorders",
+      "Feeding and Eating Disorders",
+      "Schizophrenia Spectrum and other Psychotic Disorders"
+    ) ~ "Other",
+    
+    # 第三组：合并为 Mood
+    DX_01_Cat %in% c("Depressive Disorders", "Bipolar and Related Disorders") ~ "Mood",
+    
+    # 第四组：保留 Anxiety
+    DX_01_Cat == "Anxiety Disorders" ~ "Anxiety",
+    
+    # 其他未匹配的情况暂时保留原值（后续会覆盖部分）
+    TRUE ~ DX_01_Cat
+  ))
+
+# 2. 第二步：根据 DX_01 列内容覆盖 DX_01_Cat
+# 包含 ADHD 则改为 ADHD
+data_split$DX_01_Cat[grepl("ADHD", data_split$DX_01, ignore.case = TRUE)] <- "ADHD"
+# 包含 Autism Spectrum Disorder 则改为 ASD
+data_split$DX_01_Cat[grepl("Autism Spectrum Disorder", data_split$DX_01, ignore.case = TRUE)] <- "ASD"
+
+# 3. 第三步：修改 DX_01 列中的 Neurodevelopmental Disorders 为 Other ND
+data_split$DX_01_Cat <- gsub(
+  pattern = "Neurodevelopmental Disorders",  # 要替换的原字符串
+  replacement = "Other ND",                 # 替换后的新字符串
+  x = data_split$DX_01_Cat,                 # 目标列改为DX_01_Cat
+  fixed = TRUE                              # 精确匹配纯字符串，避免正则干扰
+)
+
+# 可选：查看修改后的结果（前10行）
+head(data_split[, c("DX_01", "DX_01_Cat")], 10)
+
+data_split <- data_split %>%
+  select(-"DX_01")  %>% 
+  mutate(sex = as.factor(sex),
+         DX_01_Cat = as.factor(DX_01_Cat))
+
+```
+
+```{r}
+## Split data
+split_factor = 0.8 # 80%训练集，20%测试集
+
+# Set seed 保证拆分结果可复现
+set.seed(3456)
+
+# ===================== 关键修改部分 =====================
+# 1. 对连续变量年龄进行分箱（离散化），作为分层依据
+# 方法1：按年龄分位数分箱（推荐，保证各层样本量均衡）
+data_split$age_group <- cut(
+  data_split$age,  # 替换为你实际的年龄列名（如Age/age）
+  breaks = quantile(data_split$age, probs = seq(0, 1, 0.2)),  # 分为5个等频组
+  include.lowest = TRUE,  # 包含最小值
+  labels = paste0("Age_", 1:5)  # 给年龄组命名
+)
+
+# 方法2：按固定区间分箱（如0-18,18-30,30-50,50+），按需调整
+# data_split$age_group <- cut(
+#   data_split$年龄列名,
+#   breaks = c(0, 18, 30, 50, Inf),
+#   labels = c("0-18", "18-30", "30-50", "50+"),
+#   include.lowest = TRUE
+# )
+
+# 2. 创建分层因子：合并年龄组、性别、诊断类别（确保无缺失值）
+# 替换 性别列名/诊断列名 为你实际的列名（如Sex/gender, DX_01_Cat/diagnosis）
+data_split$strata_factor <- interaction(
+  data_split$age_group,
+  data_split$sex,
+  data_split$DX_01_Cat,  # 即你之前处理的DX_01_Cat
+  drop = TRUE  # 去除无数据的组合
+)
+
+# 3. 基于分层因子拆分数据（核心修改：从Scanner改为分层因子）
+split_index <- createDataPartition(
+  y = data_split$strata_factor,  # 分层依据
+  p = split_factor, 
+  list = FALSE, 
+  times = 1
+)
+
+# 4. 拆分训练集和测试集
+train_data <- data_split[split_index, ]    # 80% 训练集
+test_data <- data_split[-split_index, ]   # 20% 测试集
+
+
+## Save the sample split
+fwrite(train_data, paste0(outpath, "train_data.csv"))
+fwrite(test_data, paste0(outpath, "test_data.csv"))
+
+```
+
+##数据可视化
+```{r}
+library(ggplot2)
+library(cowplot)
+library(dplyr) # 用于数据预处理
+
+# 定义统一主题（让图更整洁）
+my_theme <- theme_minimal() +
+  theme(
+    plot.title = element_text(size = 12, face = "bold"),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 9),
+    axis.text.x = element_text(angle = 45, hjust = 1), # 旋转x轴标签
+    panel.grid.minor = element_blank()
+  )
+
+# 定义参数
+train.title <- "Discovery"
+test.title <- "Replication"
+y.label <- "Percentage"
+numbin <- 10 # 减少年龄分箱数，让柱子更明显
+
+
+# ========== 1. 训练集-性别（Sex）：强制计算“整个数据集的百分比” ==========
+# 先计算性别在训练集中的百分比
+train_sex_data <- train_data %>%
+  count(sex) %>%
+  mutate(percent = n / sum(n) * 100) %>%
+  mutate(sex = factor(sex, levels = c("0", "1", "2"), labels = c("Male", "Female", "Other")))
+
+train.sex <- ggplot(train_sex_data, aes(x = sex, y = percent)) +
+  geom_bar(stat = "identity", fill = 'pink', alpha = 0.8, width = 0.5) +
+  xlab("Sex") + ylab(y.label) + ggtitle(train.title) +
+  my_theme + theme(axis.ticks = element_blank())
+
+
+# ========== 2. 测试集-性别（Sex） ==========
+test_sex_data <- test_data %>%
+  count(sex) %>%
+  mutate(percent = n / sum(n) * 100) %>%
+  mutate(sex = factor(sex, levels = c("0", "1"), labels = c("Male", "Female")))
+
+test.sex <- ggplot(test_sex_data, aes(x = sex, y = percent)) +
+  geom_bar(stat = "identity", fill = 'pink', alpha = 0.5, width = 0.5) +
+  xlab("Sex") + ylab(y.label) + ggtitle(test.title) +
+  my_theme + theme(axis.ticks = element_blank())
+
+
+# ========== 3. 训练集-年龄（Age）：放大binwidth，确保柱子显示 ==========
+train_age_clean <- train_data %>% filter(!is.na(age)) %>% mutate(age_years = age/12)
+# 手动设置binwidth（比如1岁为一个区间），避免太小
+train.age <- ggplot(train_age_clean, aes(x = age_years)) +
+  geom_histogram(aes(y = after_stat(count / sum(count) * 100)),
+                 binwidth = 1, # 改为“1岁”为一个区间
+                 fill = 'orange', alpha = 0.8, color = "white") +
+  xlab("Age (years)") + ylab(y.label) + ggtitle(train.title) +
+  my_theme
+
+
+# ========== 4. 测试集-年龄（Age） ==========
+test_age_clean <- test_data %>% filter(!is.na(age)) %>% mutate(age_years = age/12)
+test.age <- ggplot(test_age_clean, aes(x = age_years)) +
+  geom_histogram(aes(y = after_stat(count / sum(count) * 100)),
+                 binwidth = 1,
+                 fill = 'orange', alpha = 0.5, color = "white") +
+  xlab("Age (years)") + ylab(y.label) + ggtitle(test.title) +
+  my_theme
+
+
+# ========== 5. 训练集-诊断类别（DX_01_Cat）：提前计算百分比 ==========
+train_dx_data <- train_data %>%
+  count(DX_01_Cat) %>%
+  mutate(percent = n / sum(n) * 100)
+
+train.dx <- ggplot(train_dx_data, aes(x = DX_01_Cat, y = percent)) +
+  geom_bar(stat = "identity", fill = 'dark green', alpha = 0.8) +
+  xlab("Diagnosis category") + ylab(y.label) + ggtitle(train.title) +
+  my_theme
+
+
+# ========== 6. 测试集-诊断类别（DX_01_Cat） ==========
+test_dx_data <- test_data %>%
+  count(DX_01_Cat) %>%
+  mutate(percent = n / sum(n) * 100)
+
+test.dx <- ggplot(test_dx_data, aes(x = DX_01_Cat, y = percent)) +
+  geom_bar(stat = "identity", fill = 'dark green', alpha = 0.5) +
+  xlab("Diagnosis category") + ylab(y.label) + ggtitle(test.title) +
+  my_theme
+
+
+# ========== 组合所有图：调整布局为2列3行 ==========
+data.split.plot <- plot_grid(
+  train.sex, test.sex,
+  train.age, test.age,
+  train.dx, test.dx,
+  align = "hv", # 同时水平+垂直对齐
+  ncol = 2, nrow = 3,
+  rel_widths = c(10, 10), # 两列宽度一致
+  rel_heights = c(10, 12, 15) # 诊断类别的图高度更大
+)
+data.split.plot
+```
