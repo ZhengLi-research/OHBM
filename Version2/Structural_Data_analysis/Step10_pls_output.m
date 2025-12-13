@@ -1,6 +1,6 @@
 %%% Read PLS output and save to matrix for plotting in R
 %%% IV 2023
-
+cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output
 % Import data
 load('edges_INSERT_effects_STRUCTresult.mat');
 %% Check significance of permutation test
@@ -59,27 +59,26 @@ for x = 1:length(permp)
         % Prep edge weights output
         [edge_ordered, i] = sort(edgeweights(:,1), 'descend', 'ComparisonMethod','abs');
         
-        labels = readtable("Glasser_360_atlas.txt", ...
+        labels = readtable("she100.txt", ...
     'FileType', 'text', ...
     'ReadVariableNames', false, ...
-    'TextType', 'string');
-        labels.Combined = labels.Var1 + "_" + labels.Var2;
+    'TextType', 'string', ...
+    'Delimiter', 'none'); 
 
+        edgemat = triu(ones(100),1);
+        edgemat_idx = triu(ones(100),1);
 
-        edgemat = triu(ones(360),1);
-        edgemat_idx = triu(ones(360),1);
-
-        edgemat_idx(edgemat > 0) = 1:64620;
+        edgemat_idx(edgemat > 0) = 1:4950;
         edgemat(edgemat > 0) = edgeweights_sig;
 
-        edgedat = (edgemat + edgemat')./(eye(360)+1);
+        edgedat = (edgemat + edgemat')./(eye(100)+1);
 
         for j = 1:length(i)
             [label_r(j), label_c(j)] = find(edgemat_idx == i(j));
         end
 
-        labels_row = labels.Combined(label_r);
-        labels_col = labels.Combined(label_c);
+        labels_row = labels.Var1(label_r);
+        labels_col = labels.Var1(label_c);
 
         edge_ordered_masked = edgeweights_sig(i,1);
 

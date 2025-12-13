@@ -66,6 +66,7 @@ covars(:,1)=zscore(covars(:,1)); %age
 covars(:,3)=zscore(covars(:,3)); %elous
 covars(:,4)=categorical(covars(:,4)); %site
 covars(:,5)=zscore(covars(:,5)); % TIV
+covars = covars(:,[1,2,5]);
 
 datamat_unconfound=nets_unconfound(datamat,covars);
 datamat = single(datamat_unconfound);
