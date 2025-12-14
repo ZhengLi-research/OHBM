@@ -1,0 +1,163 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-12-11"
+---
+## 拆分7种不同的形态结构的训练集和测试集
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("caret")
+library("ggplot2")
+library('readr')
+library("tidyverse")
+library("grid")
+library("cowplot")
+library("data.table")
+library(dplyr)
+library(stringr)
+
+```
+
+```{r}
+split_file_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version3/output/'
+MSN_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version3/Structural_data/'
+output_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version3/Structural_data/Structural_split/'
+```
+
+```{r}
+train_data <- fread(paste0(split_file_path, "train_data.csv"))
+test_data <- fread(paste0(split_file_path, "test_data.csv"))
+
+ci <- fread(paste0(MSN_path, "hbn_df_ci_pass.tsv"))[, c(363, 2:361)]
+ct <- fread(paste0(MSN_path, "hbn_df_ct_pass.tsv"))[, c(363, 2:361)]
+fi <- fread(paste0(MSN_path, "hbn_df_fi_pass.tsv"))[, c(363, 2:361)]
+gc <- fread(paste0(MSN_path, "hbn_df_gc_pass.tsv"))[, c(363, 2:361)]
+gv <- fread(paste0(MSN_path, "hbn_df_gv_pass.tsv"))[, c(363, 2:361)]
+mc <- fread(paste0(MSN_path, "hbn_df_mc_pass.tsv"))[, c(363, 2:361)]
+sa <- fread(paste0(MSN_path, "hbn_df_sa_pass.tsv"))[, c(363, 2:361)]
+```
+
+```{r}
+ci <- ci %>% rename(Identifiers = participant_id)
+ct <- ct %>% rename(Identifiers = participant_id)
+fi <- fi %>% rename(Identifiers = participant_id)
+gc <- gc %>% rename(Identifiers = participant_id)
+gv <- gv %>% rename(Identifiers = participant_id)
+mc <- mc %>% rename(Identifiers = participant_id)
+sa <- sa %>% rename(Identifiers = participant_id)
+
+train_ID <- train_data$Identifiers
+test_ID <- test_data$Identifiers
+
+ci_train <- ci[ci$Identifiers %in% train_ID, ]
+ci_test <- ci[ci$Identifiers %in% test_ID, ]
+
+ct_train <- ct[ct$Identifiers %in% train_ID, ]
+ct_test <- ct[ct$Identifiers %in% test_ID, ]
+
+fi_train <- fi[fi$Identifiers %in% train_ID, ]
+fi_test <- fi[fi$Identifiers %in% test_ID, ]
+
+gc_train <- gc[gc$Identifiers %in% train_ID, ]
+gc_test <- gc[gc$Identifiers %in% test_ID, ]
+
+gv_train <- gv[gv$Identifiers %in% train_ID, ]
+gv_test <- gv[gv$Identifiers %in% test_ID, ]
+
+mc_train <- mc[mc$Identifiers %in% train_ID, ]
+mc_test <- mc[mc$Identifiers %in% test_ID, ]
+
+sa_train <- sa[sa$Identifiers %in% train_ID, ]
+sa_test <- sa[sa$Identifiers %in% test_ID, ]
+
+```
+
+```{r}
+write.csv(
+  x = ci_train,                # 要保存的数据框
+  file = paste0(output_path, "ci_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = ci_test,                # 要保存的数据框
+  file = paste0(output_path, "ci_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = ct_train,                # 要保存的数据框
+  file = paste0(output_path, "ct_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = ct_test,                # 要保存的数据框
+  file = paste0(output_path, "ct_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = fi_train,                # 要保存的数据框
+  file = paste0(output_path, "fi_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = fi_test,                # 要保存的数据框
+  file = paste0(output_path, "fi_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = gc_train,                # 要保存的数据框
+  file = paste0(output_path, "gc_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = gc_test,                # 要保存的数据框
+  file = paste0(output_path, "gc_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = gv_train,                # 要保存的数据框
+  file = paste0(output_path, "gv_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = gv_test,                # 要保存的数据框
+  file = paste0(output_path, "gv_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = mc_train,                # 要保存的数据框
+  file = paste0(output_path, "mc_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = mc_test,                # 要保存的数据框
+  file = paste0(output_path, "mc_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = sa_train,                # 要保存的数据框
+  file = paste0(output_path, "sa_train.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+
+write.csv(
+  x = sa_test,                # 要保存的数据框
+  file = paste0(output_path, "sa_test.csv"),   # 文件名（可自定义，如"~/Desktop/CBCL插补数据.csv"）
+  row.names = FALSE                # 不保存行号（避免冗余列）
+)
+cat("ok")
+```

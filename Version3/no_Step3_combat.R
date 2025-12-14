@@ -7,7 +7,7 @@ library(dplyr)
 library(mgcv)
 
 # Define paths and parameters for structural data harmonization
-project_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/Structural_data/' # nolint
+project_path <- '/Users/lizheng/Desktop/RBC_Output/HBN/Freesurfer/' # nolint
 data_path <- paste(project_path, sep = "")
 
 metric <- 'gv'  # can also be 'gv', 'ct', or 'sa' # nolint: quotes_linter.

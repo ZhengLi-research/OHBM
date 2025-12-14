@@ -211,7 +211,7 @@ for iDataset in dataset: # 按照数据库类型进行循环
         #     output_filename = (datapath + 'data/dataR/%s_df_%s_artifact.tsv'
         #                        % (iDataset, iType))
         if qc_version == 'pass':
-            output_filename = ( '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/Structural_data/%s_df_%s_pass.tsv'
+            output_filename = ( '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version3/Structural_data/%s_df_%s_pass.tsv'
                                % (iDataset, iType))           
 
         df_final.to_csv(output_filename, sep='\t')

@@ -1,14 +1,14 @@
 %Importing the data:
 clear, clc,close
-cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/freesurfer_split/
+cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version3/Structural_data/Structural_split/
 
-a=load('ci_test.mat').fin;
-b=load('fi_test.mat').fin;
-c=load('gc_test.mat').fin;
-d=load('gv_test.mat').fin;
-e=load('mc_test.mat').fin;
-f=load('sa_test.mat').fin;
-g=load('ct_test.mat').fin;
+a=load('ci_train.mat').fin;
+b=load('fi_train.mat').fin;
+c=load('gc_train.mat').fin;
+d=load('gv_train.mat').fin;
+e=load('mc_train.mat').fin;
+f=load('sa_train.mat').fin;
+g=load('ct_train.mat').fin;
 
 a=table2array(a);
 b=table2array(b);
@@ -58,4 +58,4 @@ end
 % end
 
 MSNnetwork=cat(3,Z_subj_MSN_7{:});
-save('test_newMSNnetwork.mat',"MSNnetwork",'-mat')
+save('train_newMSNnetwork.mat',"MSNnetwork",'-mat')
