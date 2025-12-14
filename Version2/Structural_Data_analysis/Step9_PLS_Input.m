@@ -1,15 +1,15 @@
 %%% Script that creates input files to plsgui
 %%% IV 2023
-
+clear, clc
 datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/Structural_split/';
 behaviorpath = '//Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
-plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
-
+plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/testdata/';
+% /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/
 %% Prep datafile
 % data is indexed by datafile, mat-file that reads into matlab as "datamat"
 % nsubjects by nedges single
 
-datamat_raw = load([datapath, 'train_newMSNnetwork.mat']).MSNnetwork;
+datamat_raw = load([datapath, 'test_newMSNnetwork.mat']).MSNnetwork; %% test
 datamat = reshape(datamat_raw, [], size(datamat_raw, 3))';
 
 mask=1:length(datamat);
@@ -21,7 +21,7 @@ datamat=datamat(:,grot);
 %% Prep behaviour file
 % Add symp data as behav-file (CBCL)
 all_data = readtable([behaviorpath 'all_data.csv']);
-train_data = readtable([behaviorpath 'train_data.csv']);
+train_data = readtable([behaviorpath 'test_data.csv']); %% test
 
 train_subject_ids = train_data.Identifiers;
 match_indices = ismember(all_data.Identifiers, train_subject_ids);
@@ -108,7 +108,7 @@ session_info = struct('description', 'hbn edges' , ...
 singeprecision = 1;
 voxel_size = [2,2,2]; 
 
-save('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat', ...
+save([plspath 'edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat'], ...
     'behavdata','create_datamat_info','dims','session_info','behavname','create_ver','origin',...
     'singeprecision','bad_coords','coords','datafile','selected_subjects','voxel_size')
 
@@ -120,5 +120,5 @@ plsgui
 % NB! Remember to manually change correlation mode to 8 in
 % STRUCTanalysis.txt-file
 
-batch_plsgui('edges_INSERT_effects_STRUCTanalysis.txt')
+batch_plsgui([plspath 'edges_INSERT_effects_STRUCTanalysis.txt'])
 

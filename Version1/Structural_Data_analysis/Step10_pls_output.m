@@ -1,7 +1,8 @@
 %%% Read PLS output and save to matrix for plotting in R
 %%% IV 2023
 clear, clc
-cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output
+cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/test_data
+% train /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output
 % Import data
 load('edges_INSERT_effects_STRUCTresult.mat');
 %% Check significance of permutation test

@@ -1,15 +1,15 @@
 %%% Script that creates input files to plsgui
 %%% IV 2023
-
+clear, clc
 datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/freesurfer_split/';
 behaviorpath = '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/';
-plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/';
-
+plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/test_data/'; %% train test
+% train /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/
 %% Prep datafile
 % data is indexed by datafile, mat-file that reads into matlab as "datamat"
 % nsubjects by nedges single
 
-datamat_raw = load([datapath, 'train_newMSNnetwork.mat']).MSNnetwork;
+datamat_raw = load([datapath, 'test_newMSNnetwork.mat']).MSNnetwork; %%% train test
 datamat = reshape(datamat_raw, [], size(datamat_raw, 3))';
 
 mask=1:length(datamat);
@@ -21,7 +21,7 @@ datamat=datamat(:,grot);
 %% Prep behaviour file
 % Add symp data as behav-file (CBCL)
 all_data = readtable([behaviorpath 'all_data.csv']);
-train_data = readtable([behaviorpath 'train_data.csv']);
+train_data = readtable([behaviorpath 'test_data.csv']); %% train test
 
 train_subject_ids = train_data.Identifiers;
 match_indices = ismember(all_data.Identifiers, train_subject_ids);
@@ -122,5 +122,5 @@ plsgui
 % NB! Remember to manually change correlation mode to 8 in
 % STRUCTanalysis.txt-file
 
-batch_plsgui('edges_INSERT_effects_STRUCTanalysis.txt')
+batch_plsgui([plspath 'edges_INSERT_effects_STRUCTanalysis.txt'])
 
