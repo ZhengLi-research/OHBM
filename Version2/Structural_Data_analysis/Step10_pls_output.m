@@ -1,5 +1,6 @@
 %%% Read PLS output and save to matrix for plotting in R
 %%% IV 2023
+clear, clc
 cd /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output
 % Import data
 load('edges_INSERT_effects_STRUCTresult.mat');
@@ -110,6 +111,8 @@ for x = 1:length(permp)
 
         behav = table(behav_ordered, sympnames_ordered);
         behav.itemtext = cbcl.Question(locb);
+        behav.firstorder = cbcl.first_order(locb);
+        behav.secondtorder = cbcl.second_order(locb);
 
         writetable(behav, ['symptom_output/symptom_weights_ordered_sig_sympLV', num2str(x), '.csv'])
 
@@ -137,6 +140,8 @@ for x = 1:length(permp)
 
         behavcorrs = table(behcorrs_ordered, behcorrs_ul_ordered, behcorrs_ll_ordered, sympnames_ordered2);
         behavcorrs.itemtext = cbcl.Question(locb);
+        behavcorrs.firstorder = cbcl.first_order(locb);
+        behavcorrs.secondtorder = cbcl.second_order(locb);
 
         writetable(behavcorrs, ['symptom_output/symptom_loadings_ordered_sig_sympLV', num2str(x), '.csv'])
 

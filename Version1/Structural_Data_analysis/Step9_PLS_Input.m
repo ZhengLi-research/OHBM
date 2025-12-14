@@ -1,9 +1,9 @@
 %%% Script that creates input files to plsgui
 %%% IV 2023
 
-datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/freesurfer_split/';
-behaviorpath = '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/';
-plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/';
+datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/freesurfer_split/';
+behaviorpath = '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/';
+plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/';
 
 %% Prep datafile
 % data is indexed by datafile, mat-file that reads into matlab as "datamat"
@@ -26,7 +26,14 @@ train_data = readtable([behaviorpath 'train_data.csv']);
 train_subject_ids = train_data.Identifiers;
 match_indices = ismember(all_data.Identifiers, train_subject_ids);
 all_data_matched = all_data(match_indices, :);
-
+TIV = readtable('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/behavior/hbn_df_ci_pass.csv');
+TIV = TIV( :,["participant_id","EstimatedTotalIntraCranialVol_eTIV"]);
+names = TIV.Properties.VariableNames;
+names(strcmp(names, 'participant_id')) = {'Identifiers'};
+names(strcmp(names, 'EstimatedTotalIntraCranialVol_eTIV')) = {'TIV'};
+TIV.Properties.VariableNames = names;
+merged_data = innerjoin(all_data_matched, TIV, 'Keys', 'Identifiers');
+all_data_matched = merged_data;
 % 方法1：分步条件替换（新手易理解）
 % 初始化数值列（和 sex 列长度一致）
 sex_numeric = zeros(height(all_data_matched), 1);  % 先默认设为 0（对应 Female）
@@ -42,7 +49,7 @@ all_data_matched.sex = sex_numeric;
 CBCL = all_data_matched(: ,367:485);
 symp_mat = table2array(CBCL);
 
-covars = table2array(all_data_matched(:, 2:4));
+covars = table2array(all_data_matched(:, [2:4, 486]));
 
 
 symp_mat_scaled=zscore(symp_mat);
@@ -59,6 +66,8 @@ addpath /Users/lizheng/Matlab_Plugin/FSLNets
 covars(:,2)=categorical(covars(:,2)); %sex
 covars(:,1)=zscore(covars(:,1)); %age
 covars(:,3)=zscore(covars(:,3)); %elous
+covars(:,4)=zscore(covars(:,4));%TIV
+
 
 
 datamat_unconfound=nets_unconfound(datamat,covars);
@@ -101,7 +110,7 @@ session_info = struct('description', 'hbn edges' , ...
 singeprecision = 1;
 voxel_size = [2,2,2]; 
 
-save('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/behavior_data/output/edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat', ...
+save([plspath 'edges_deconfounded_matched_with_symp_STRUCTsessiondata.mat'], ...
     'behavdata','create_datamat_info','dims','session_info','behavname','create_ver','origin',...
     'singeprecision','bad_coords','coords','datafile','selected_subjects','voxel_size')
 
