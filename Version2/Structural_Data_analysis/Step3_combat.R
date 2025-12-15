@@ -7,10 +7,10 @@ library(dplyr)
 library(mgcv)
 
 # Define paths and parameters for structural data harmonization
-project_path <- '/Users/lizheng/Desktop/RBC_Output/HBN/Freesurfer/' # nolint
+project_path <- '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/' # nolint
 data_path <- paste(project_path, sep = "")
 
-metric <- 'gv'  # can also be 'gv', 'ct', or 'sa' # nolint: quotes_linter.
+metric <- 'sv'  # can also be 'gv', 'ct', or 'sa' # nolint: quotes_linter.
 # we only want to harmonize 'artifact' version
 qc_version <- 'pass'  # can be 'noqc', 'artifact' # nolint: quotes_linter.
 pfactor_include <- 'no' # whether to include p-factor in covariates # nolint: quotes_linter.
@@ -36,11 +36,11 @@ pfactor_vec <- combined_data$p_factor_mcelroy_harmonized_all_samples
 }
 
 if (metric == 'ct') {
-  structural_data <- combined_data[, c(2:362)] #[, c(1:68, 71, 72)]
+  structural_data <- combined_data[, c(2:102)] #[, c(1:68, 71, 72)]
 } else if (metric == 'sa') {
-  structural_data <- combined_data[, c(2:362)]
+  structural_data <- combined_data[, c(2:102)]
 } else {
-  structural_data <- combined_data[, c(2:362)]
+  structural_data <- combined_data[, c(2:102)]
 }
 # else if (metric == 'sv') {
 #  structural_data <- combined_data[, c(1:15)]

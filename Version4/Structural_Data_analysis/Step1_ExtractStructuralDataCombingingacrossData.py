@@ -58,7 +58,7 @@ for iDataset in dataset: # 按照数据库类型进行循环
         temp_file = iFile
         temp_file2 = iFile
         brain_data = pd.read_csv(iFile, delimiter='\t')
-        DK68 = brain_data.loc[(brain_data['atlas'] == 'Schaefer2018_100Parcels_7Networks_order') & 
+        DK68 = brain_data.loc[(brain_data['atlas'] == 'Schaefer2018_400Parcels_7Networks_order') & 
     (brain_data['StructName'] != "Background+FreeSurfer_Defined_Medial_Wall"), ('hemisphere', 'StructName', 'SurfArea', 'GrayVol', 'ThickAvg', 'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd')]
         DK68.reset_index(inplace=True, drop=True)
         temp_filefin = temp_file2.replace('regionsurfacestats', 'brainmeasures')
@@ -195,7 +195,7 @@ for iDataset in dataset: # 按照数据库类型进行循环
         
         # extract data for age range 6-22 years old
         df_final = df_qc.copy()
-        df_final = df_final.query('6 <= age <= 22')
+        df_final = df_final.query('5 <= age <= 22')
         df_final.reset_index(inplace=True, drop=True)
     
 
@@ -207,7 +207,7 @@ for iDataset in dataset: # 按照数据库类型进行循环
         #     output_filename = (datapath + 'data/dataR/%s_df_%s_artifact.tsv'
         #                        % (iDataset, iType))
         if qc_version == 'pass':
-            output_filename = ( '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/%s_df_%s_pass.tsv'
+            output_filename = ( '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version4/Structural_data/%s_df_%s_pass.tsv'
                                % (iDataset, iType))           
 
         df_final.to_csv(output_filename, sep='\t')

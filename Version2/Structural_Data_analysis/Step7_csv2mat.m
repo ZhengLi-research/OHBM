@@ -1,5 +1,5 @@
 cd '/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/Structural_split'
-we=dir(fullfile('*_train.csv'));
+we=dir(fullfile('*_test.csv'));
 leng=size(we,1);
 for i=1:leng
     loadname = we(i).name;

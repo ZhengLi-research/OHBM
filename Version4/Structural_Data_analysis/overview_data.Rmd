@@ -1,0 +1,38 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-12-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library('readr')
+```
+
+```{r}
+demodata <- read.csv('/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version1/behavior_data/output/all_data.csv', sep = ',')
+```
+
+```{r}
+age_min <- min(demodata$age, na.rm = TRUE)  # na.rm=TRUE：忽略缺失值
+age_max <- max(demodata$age, na.rm = TRUE)
+
+# 输出结果
+cat("年龄最小值：", age_min, "\n")
+cat("年龄最大值：", age_max, "\n")
+```
+
+```{r}
+site_freq_dplyr <- demodata %>%
+  count(study_site, name = "频数", na.rm = FALSE)  # na.rm=FALSE：保留缺失值
+print("dplyr版频数分布：")
+print(site_freq_dplyr)
+```
+
+
+
+

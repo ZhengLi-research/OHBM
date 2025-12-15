@@ -1,22 +1,20 @@
 %%% Script that creates input files to plsgui
 %%% IV 2023
 clear, clc
-datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/Structural_data/Structural_split/';
-behaviorpath = '//Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
-plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/';
+datapath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version4/Structural_data/Structural_split/';
+behaviorpath = '//Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version4/output/';
+plspath='/Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version4/output/';
 % /Users/lizheng/Desktop/同步文件夹/博士研究课题/OHBM会议数据分析/Version2/output/
 %% Prep datafile
 % data is indexed by datafile, mat-file that reads into matlab as "datamat"
 % nsubjects by nedges single
 
-datamat_raw = load([datapath, 'train_newMSNnetwork.mat']).MSNnetwork; %% test
-datamat = reshape(datamat_raw, [], size(datamat_raw, 3))';
+datamat_raw = load([datapath, 'fi_train.mat']).fin; %% test
+datamat_raw_2 = table2array(datamat_raw);
+datamat=zscore(transpose(datamat_raw_2 ))';
+datamat= zscore(datamat);
+% save structura_raw.mat datamat
 
-mask=1:length(datamat);
-mask_mat=reshape(mask,[sqrt(length(datamat)),sqrt(length(datamat))]);
-grot=triu(mask_mat,1);
-grot=grot(grot>0);
-datamat=datamat(:,grot);
 
 %% Prep behaviour file
 % Add symp data as behav-file (CBCL)
@@ -51,7 +49,7 @@ symp_mat = table2array(CBCL);
 covars = table2array(all_data_matched(:, [2:5, 108]));
 
 symp_mat_scaled=zscore(symp_mat);
-
+save cbcl_scaled.mat symp_mat_scaled
 symp_names = CBCL.Properties.VariableNames;
 
 writematrix(symp_mat, [plspath 'symp_mat_no_nans_raw.txt'])
@@ -66,6 +64,7 @@ covars(:,1)=zscore(covars(:,1)); %age
 covars(:,3)=zscore(covars(:,3)); %elous
 covars(:,4)=categorical(covars(:,4)); %site
 covars(:,5)=zscore(covars(:,5)); % TIV
+covars = covars(:,[1,2,3,5]);
 
 datamat_unconfound=nets_unconfound(datamat,covars);
 datamat = single(datamat_unconfound);
@@ -120,4 +119,3 @@ plsgui
 % STRUCTanalysis.txt-file
 
 batch_plsgui([plspath 'edges_INSERT_effects_STRUCTanalysis.txt'])
-
