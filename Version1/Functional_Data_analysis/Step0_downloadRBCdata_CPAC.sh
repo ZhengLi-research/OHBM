@@ -26,6 +26,8 @@ for SUBJECT_DIR in "$DATA_PATH"/sub-*; do
         else
             # 下载目标文件
             datalad get "$TARGET_FILE"
+            cp "$TARGET_FILE" "$OUTPUT_PATH/"
+
         fi
     fi
 done
