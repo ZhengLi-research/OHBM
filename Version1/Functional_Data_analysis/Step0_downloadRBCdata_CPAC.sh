@@ -2,7 +2,7 @@
 cd /Users/lizheng/Desktop/RBC/HBN/CPAC/HBN_CPAC/cpac_RBCv0
 
 DATA_PATH="/Users/lizheng/Desktop/RBC/HBN/CPAC/HBN_CPAC/cpac_RBCv0"  # 替换为你的实际路径
-OUTPUT_PATH="/Users/lizheng/Desktop/RBC_download_report/HBN_CPAC"          # 替换为输出文件的路径
+OUTPUT_PATH="/Users/lizheng/Desktop/rbcd"          # 替换为输出文件的路径
 MISSING_FILE_REPORT="${OUTPUT_PATH}/missing_files_report.xlsx"
 
 # 创建输出目录
@@ -12,22 +12,24 @@ mkdir -p "$OUTPUT_PATH"
 MISSING_FILES=()
 
 # 定义文件名模式变量
-FILE_SUFFIX="brainmeasures"
+FILENAME="task-rest"
+FILE_SUFFIX="Schaefer2018p300n17_space-MNI152NLin6ASym_reg-36Parameter_desc-PartialNilearn_correlations"
 
 # 遍历每个子文件夹
 for SUBJECT_DIR in "$DATA_PATH"/sub-*; do
     if [ -d "$SUBJECT_DIR" ]; then
         SUBJECT_ID=$(basename "$SUBJECT_DIR")
-        TARGET_FILE=$(find "$SUBJECT_DIR" -maxdepth 1 -name "${SUBJECT_ID}_${FILE_SUFFIX}.tsv")
+        TARGET_FILES=($(find "$SUBJECT_DIR" -path "*/func/*" -name "${SUBJECT_ID}_*${FILENAME}_*${FILE_SUFFIX}.tsv"))
 
-        if [ -z "$TARGET_FILE" ]; then
+        if [ ${#TARGET_FILES[@]} -eq 0 ]; then
             # 如果文件不存在，记录缺失的文件夹
             MISSING_FILES+=("$SUBJECT_ID")
         else
-            # 下载目标文件
-            datalad get "$TARGET_FILE"
-            cp "$TARGET_FILE" "$OUTPUT_PATH/"
-
+            # 下载所有目标文件
+            for TARGET_FILE in "${TARGET_FILES[@]}"; do
+                datalad get "$TARGET_FILE"
+                cp "$TARGET_FILE" "$OUTPUT_PATH/"
+            done
         fi
     fi
 done
